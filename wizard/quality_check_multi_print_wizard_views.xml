@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_quality_check_multi_print_wizard_form" model="ir.ui.view">
+        <field name="name">quality.check.multi.print.wizard.form</field>
+        <field name="model">quality.check.multi.print.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Print Multiple Quality Checks">
+                <group>
+                    <field name="report_title"/>
+                </group>
+                <group string="Selected Quality Checks">
+                    <field name="quality_check_ids" widget="many2many_tags" nolabel="1" options="{'no_create': True}"/>
+                </group>
+                <footer>
+                    <button name="action_print_report" type="object" string="Print Report" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_quality_check_multi_print_wizard" model="ir.actions.act_window">
+        <field name="name">Print Multiple Quality Checks</field>
+        <field name="res_model">quality.check.multi.print.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

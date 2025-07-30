@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Report Template -->
+        <template id="report_multiple_quality_check">
+            <t t-call="web.html_container">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <!-- Report Header -->
+                        <div class="row mb-4">
+                            <div class="col-12 text-center">
+                                <h2 style="color: #2c3e50; font-weight: bold;">
+                                    <t t-esc="data.get('report_title', 'Multiple Quality Check Report')"/>
+                                </h2>
+                                <p style="color: #7f8c8d;">Generated on
+                                    <t t-esc="datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')"/>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Summary Section -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div style="background-color: #ecf0f1; padding: 15px; border-radius: 5px;">
+                                    <h4 style="color: #34495e; margin-bottom: 10px;">Summary</h4>
+                                    <div class="row">
+                                        <div class="col-4">
+                                            <strong>Total Checks:</strong>
+                                            <t t-esc="len(docs)"/>
+                                        </div>
+                                        <div class="col-4">
+                                            <strong>Passed:</strong>
+                                            <t t-esc="len([d for d in docs if d.quality_state == 'pass'])"/>
+                                        </div>
+                                        <div class="col-4">
+                                            <strong>Failed:</strong>
+                                            <t t-esc="len([d for d in docs if d.quality_state == 'fail'])"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Group pickings -->
+                        <t t-set="pickings" t-value="docs.mapped('picking_id')"/>
+
+                        <!-- For each picking, show a section with related quality checks -->
+                        <t t-foreach="pickings" t-as="picking">
+                            <div class="row mb-2" t-if="picking">
+                                <div class="col-12">
+                                    <div style="background-color: #d4e6f1; padding: 10px; border-radius: 3px;">
+                                        <strong>Source Document: </strong><span t-field="picking.name"/>
+                                        <t t-if="picking.partner_id">
+                                            <strong style="margin-left: 15px;">Partner: </strong><span t-field="picking.partner_id.name"/>
+                                        </t>
+                                        <t t-if="picking.scheduled_date">
+                                            <strong style="margin-left: 15px;">Date: </strong><span t-field="picking.scheduled_date"/>
+                                        </t>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Quality checks for this picking -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <table class="table table-bordered table-sm" style="font-size: 13px;">
+                                        <thead style="background-color: #f2f3f4;">
+                                            <tr>
+                                                <th style="width: 5%;">No.</th>
+                                                <th style="width: 8%;">Reference</th>
+                                                <th style="width: 13%;">Product</th>
+                                                <th style="width: 10%;">Parameter</th>
+                                                <th style="width: 10%;">Partner</th>
+                                                <th style="width: 5%;">Status</th>
+                                                <th style="width: 5%;">Fail Count</th>
+                                                <th style="width: 10%;">Date</th>
+                                                <th style="width: 10%;">Responsible</th>
+                                                <th>Notes</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-set="filtered_docs" t-value="docs.filtered(lambda d: d.picking_id.id == picking.id)"/>
+                                            <t t-foreach="filtered_docs" t-as="doc">
+                                                <tr>
+                                                    <td><t t-esc="doc_index + 1"/></td>
+                                                    <td><t t-esc="doc.name"/></td>
+                                                    <td><t t-esc="doc.product_id.name"/></td>
+                                                    <td><t t-esc="doc.x_studio_parameter"/></td>
+                                                    <td><t t-esc="doc.picking_id.partner_id.name or ''"/></td>
+                                                    <td>
+                                                        <span t-attf-class="badge #{doc.quality_state == 'pass' and 'badge-success' or doc.quality_state == 'fail' and 'badge-danger' or 'badge-warning'}"
+                                                              style="font-size: 12px; padding: 4px 8px;">
+                                                            <t t-esc="doc.quality_state.title()"/>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <t t-if="doc.quality_state == 'fail'">1</t>
+                                                        <t t-else="">0</t>
+                                                    </td>
+                                                    <td><t t-esc="doc.control_date"/></td>
+                                                    <td><t t-esc="doc.user_id.name"/></td>
+                                                    <td><t t-esc="doc.additional_note"/></td>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </t>
+
+                        <!-- Quality checks without picking -->
+                        <t t-set="no_picking_docs" t-value="docs.filtered(lambda d: not d.picking_id)"/>
+                        <t t-if="no_picking_docs">
+                            <div class="row mb-2">
+                                <div class="col-12">
+                                    <div style="background-color: #d4e6f1; padding: 10px; border-radius: 3px;">
+                                        <strong>Other Quality Checks</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <table class="table table-bordered table-sm" style="font-size: 13px;">
+                                        <thead style="background-color: #f2f3f4;">
+                                            <tr>
+                                                <th style="width: 5%;">No.</th>
+                                                <th style="width: 8%;">Reference</th>
+                                                <th style="width: 13%;">Product</th>
+                                                <th style="width: 10%;">Parameter</th>
+                                                <th style="width: 10%;">Partner</th>
+                                                <th style="width: 5%;">Status</th>
+                                                <th style="width: 5%;">Fail Count</th>
+                                                <th style="width: 10%;">Date</th>
+                                                <th style="width: 10%;">Responsible</th>
+                                                <th>Notes</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="no_picking_docs" t-as="doc">
+                                                <tr>
+                                                    <td><t t-esc="doc_index + 1"/></td>
+                                                    <td><t t-esc="doc.name"/></td>
+                                                    <td><t t-esc="doc.product_id.name"/></td>
+                                                    <td><t t-esc="doc.test_type_id.name or ''"/></td>
+                                                    <td><t t-esc="doc.production_id.partner_id.name if doc.production_id else ''"/></td>
+                                                    <td>
+                                                        <span t-attf-class="badge #{doc.quality_state == 'pass' and 'badge-success' or doc.quality_state == 'fail' and 'badge-danger' or 'badge-warning'}"
+                                                              style="font-size: 12px; padding: 4px 8px;">
+                                                            <t t-esc="doc.quality_state.title()"/>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <t t-if="doc.quality_state == 'fail'">1</t>
+                                                        <t t-else="">0</t>
+                                                    </td>
+                                                    <td><t t-esc="doc.control_date"/></td>
+                                                    <td><t t-esc="doc.user_id.name"/></td>
+                                                    <td><t t-if="doc.note"><span t-esc="doc.note"/></t></td>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </t>
+
+                        <!-- Footer -->
+                        <div class="row mt-5">
+                            <div class="col-12 text-center">
+                                <p style="color: #95a5a6; font-size: 12px;">
+                                    This report was generated automatically by the Quality Control System
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </template>
+
+        <!-- Report Action -->
+        <record id="action_report_multiple_quality_check" model="ir.actions.report">
+            <field name="name">Multiple Quality Check Report</field>
+            <field name="model">quality.check</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">report_print_custom2.report_multiple_quality_check</field>
+            <field name="report_file">report_print_custom2.report_multiple_quality_check</field>
+            <field name="print_report_name">'Multiple Quality Check Report - %s' %
+                (datetime.datetime.now().strftime('%Y%m%d_%H%M%S'))
+            </field>
+            <field name="paperformat_id" ref="base.paperformat_euro"/>
+        </record>
+    </data>
+</odoo>
